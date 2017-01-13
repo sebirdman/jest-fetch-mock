@@ -10,7 +10,7 @@ require('whatwg-fetch');
 
 const ActualResponse = Response;
 
-function ResponseWrapper(body, init) {
+function ResponseWrapper(body, init, status) {
   if (
     typeof body.constructor === 'function' &&
     body.constructor.__isFallback
@@ -30,29 +30,31 @@ function ResponseWrapper(body, init) {
     return response;
   }
 
-  return new ActualResponse(body, init);
+  let item = new ActualResponse(body, init);
+  item.ok = status;
+  return item;
 }
 
 const fetch = jest.fn();
 fetch.Headers = Headers;
 fetch.Response = ResponseWrapper;
 fetch.Request = Request;
-fetch.mockResponse = (body, init) => {
+fetch.mockResponse = (body, init, status) => {
   fetch.mockImplementation(
-    () => Promise.resolve(new ResponseWrapper(body, init))
+    () => Promise.resolve(new ResponseWrapper(body, init, status))
   );
 };
 
-fetch.mockResponseOnce = (body, init) => {
+fetch.mockResponseOnce = (body, init, status) => {
   fetch.mockImplementationOnce(
-    () => Promise.resolve(new ResponseWrapper(body, init))
+    () => Promise.resolve(new ResponseWrapper(body, init, status))
   );
 };
 
 fetch.mockResponses = (...responses) => {
-  responses.forEach(([ body, init ]) => {
+  responses.forEach(([ body, init, status ]) => {
     fetch.mockImplementationOnce(
-      () => Promise.resolve(new ResponseWrapper(body, init))
+      () => Promise.resolve(new ResponseWrapper(body, init, status))
     );
   })
 };
